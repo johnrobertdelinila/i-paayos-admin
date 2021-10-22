@@ -102,18 +102,26 @@
       </div>
       <main class="mdl-layout__content mdl-color--grey-100">
         <div class="mdl-grid demo-content">
-          <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
+          <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid" style="width:100%;">
 
             <center>
-              <h3>Service Provider Table</h3>
+
+              <div class="mdl-textfield mdl-js-textfield">
+                <textarea id="announcement" class="mdl-textfield__input" type="text" rows= "3" id="sample5" ></textarea>
+                <label class="mdl-textfield__label" for="sample5">Your announcement...</label>
+              </div>
+              <br>
+
+              <button id="submit_announcement" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+                Send
+              </button>
+
+              <h3>Announcement Table</h3>
               <table id="provider_data" class="mdl-data-table" style="width:100%;">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Service</th>
-                        <th>Address</th>
-                        <th>Phone</th>
+                        <th>Announcement</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
   
@@ -121,23 +129,7 @@
   
                 </tbody>
               </table>
-              
-              </br>
-              <h3>Customer Table</h3>
-              <table id="customer_data" class="mdl-data-table" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Address</th>
-                        <th>Phone</th>
-                    </tr>
-                </thead>
-  
-                <tbody>
-  
-                </tbody>
-              </table>
+
 
             </center>
 
@@ -223,30 +215,30 @@
 <script>
   $(document).ready(() => {
     
-    const provider_table = $('#provider_data').DataTable({
+    const announcement_table = $('#provider_data').DataTable({
       dom: 'Bfrtip',
       buttons: [
           'csv'
       ]
     });
 
-    const customer_table = $('#customer_data').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-          'csv'
-      ]
+    $('#submit_announcement').click(() => {
+      const announcement = $('#announcement').val();
+      if(announcement.trim() != "") {
+        const data = {
+          announcement: announcement,
+          timestamp: new Date().toLocaleString()
+        }
+        firebase.database().ref().child("Announcement").push(data);
+      }
+      
     });
 
-    var rootRef = firebase.database().ref().child("Users");
+    var rootRef = firebase.database().ref().child("Announcement");
 
     rootRef.on("child_added", snap => {
-      var providerDataSet = [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), snap.child("Address").val(), snap.child("Mobile").val()];
-      var customerDataSet = [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val()];
-      if(snap.child("Profession").val() == "") {
-        customer_table.rows.add([customerDataSet]).draw();
-      }else {
-        provider_table.rows.add([providerDataSet]).draw();
-      }
+      var announcementDataSet = [snap.child("announcement").val(), snap.child("timestamp").val()];
+      announcement_table.rows.add([announcementDataSet]).draw();
     
     })
     
