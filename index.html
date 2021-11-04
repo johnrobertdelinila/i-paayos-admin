@@ -32,13 +32,13 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-light_blue.min.css">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    
     <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.material.min.css">
     <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/4.0.0/material-components-web.min.css">
     
-    <script type="text/JavaScript" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-    <script type="text/JavaScript" src="https://cdn.datatables.net/1.10.25/js/dataTables.material.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+	  <script src="https://cdn.datatables.net/1.10.16/js/dataTables.material.min.js"></script>  
   
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -114,6 +114,9 @@
                         <th>Service</th>
                         <th>Address</th>
                         <th>Phone</th>
+                        <th>Verify</th>
+                        <th>Action</th>
+                        <th>Credentials</th>
                     </tr>
                 </thead>
   
@@ -131,6 +134,7 @@
                         <th>Email</th>
                         <th>Address</th>
                         <th>Phone</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
   
@@ -197,6 +201,7 @@
 
       <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
       <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
       <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-analytics.js"></script>
       
 
@@ -239,16 +244,102 @@
 
     var rootRef = firebase.database().ref().child("Users");
 
-    rootRef.on("child_added", snap => {
-      var providerDataSet = [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), snap.child("Address").val(), snap.child("Mobile").val()];
-      var customerDataSet = [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val()];
+    $(document).on('click', '.approved', (e) => {
+      if(confirm("Are you sure you want to action this user?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'approved': true})
+      }
+    });
+
+    $(document).on('click', '.disapproved', (e) => {
+      if(confirm("Are you sure you want to action this user?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'approved': false})
+      }
+    });
+
+    $(document).on('click', '.disable', (e) => {
+      if(confirm("Are you sure you want to action this user?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'isDisabled': true})
+      }
+    });
+
+    $(document).on('click', '.disabled', (e) => {
+      if(confirm("Are you sure you want to action this user?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'isDisabled': false})
+      }
+    });
+
+    function displayImage(imageRef, key) {
+      imageRef.getDownloadURL().then(function(url) {
+        const dataset = provider_table.row('.' + key).data();
+        dataset[7] += '<a target="_blank" href="'+ url +'"><img src="'+ url +'" style="margin-left: 2px; margin-right: 2px;" width="50" height="50" alt="credential"></a>';
+        provider_table.row('.' + key).data(dataset).draw();
+      }).catch(function(error) {
+        console.log(error.message);
+      });
+    }
+
+    function dataset(snap) {
       if(snap.child("Profession").val() == "") {
-        customer_table.rows.add([customerDataSet]).draw();
+        if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
+          var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
+        }else {
+          var disableBtn = '<button class="disable mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Disable</button>';
+        }
+        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val(), disableBtn];
       }else {
-        provider_table.rows.add([providerDataSet]).draw();
+        if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
+          var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
+        }else {
+          var disableBtn = '<button class="disable mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Disable</button>';
+        }
+        if(snap.child("approved").exists() && snap.child("approved").val()) {
+          var button = '<button class="disapproved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Disapprove</button>';
+        }else {
+          var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Approve</button>';
+        }
+
+        var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
+        listRef.listAll()
+          .then((res) => {
+            console.log("Meron");
+            res.items.forEach((imageRef) => {
+              displayImage(imageRef, snap.key);
+            });
+          }).catch((error) => {
+            console.log(error.message);
+          });
+        
+        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), 
+          snap.child("Address").val(), snap.child("Mobile").val(), button, disableBtn, ''];
+      }
+    }
+  
+
+    rootRef.on("child_added", snap => {
+      const datasets = dataset(snap);
+      if(snap.child("Profession").val() == "") {
+        const trDOM = customer_table.row.add(datasets).draw().node();
+        $( trDOM ).addClass(snap.key);
+      }else {
+        const trDOM = provider_table.row.add(datasets).draw().node();
+        $( trDOM ).addClass(snap.key);
       }
     
-    })
+    });
+
+    rootRef.on('child_changed', snap => {
+      const datasets = dataset(snap);
+      if(snap.child("Profession").val() == "") {
+        customer_table.row('.' + snap.key).data(datasets).draw();
+      }else {
+        provider_table.row('.' + snap.key).data(datasets).draw();
+      }
+
+    });
     
 
   });
