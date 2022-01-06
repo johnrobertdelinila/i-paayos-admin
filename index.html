@@ -33,12 +33,20 @@
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-light_blue.min.css">
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     
     <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.material.min.css">
+    <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/buttons/2.1.0/css/buttons.dataTables.min.css">
+    <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
     <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/4.0.0/material-components-web.min.css">
     
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 	  <script src="https://cdn.datatables.net/1.10.16/js/dataTables.material.min.js"></script>  
+    <script src="https://cdn.datatables.net/buttons/2.1.0/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script> 
+    <script src="https://cdn.datatables.net/buttons/2.1.0/js/buttons.html5.min.js"></script>
+    
   
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -227,18 +235,26 @@
 </html>
 <script>
   $(document).ready(() => {
+
+    emailjs.init("user_psoqqMkxfrpB6Bp9hcGho");
     
     const provider_table = $('#provider_data').DataTable({
       dom: 'Bfrtip',
       buttons: [
-          'csv'
+        {
+          extend: 'pdfHtml5',
+          download: 'open'
+        }
       ]
     });
 
     const customer_table = $('#customer_data').DataTable({
       dom: 'Bfrtip',
       buttons: [
-          'csv'
+        {
+          extend: 'pdfHtml5',
+          download: 'open'
+        }
       ]
     });
 
@@ -247,14 +263,17 @@
     $(document).on('click', '.approved', (e) => {
       if(confirm("Are you sure you want to action this user?")) {
         const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'approved': true})
+        rootRef.child(key).update({'approved': true});
+        const name = $(e.currentTarget).attr('name');
+        const email = $(e.currentTarget).attr('email');
+        sendEmail(email, name);
       }
     });
 
     $(document).on('click', '.disapproved', (e) => {
       if(confirm("Are you sure you want to action this user?")) {
         const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'approved': false})
+        rootRef.child(key).update({'approved': false});
       }
     });
 
@@ -299,7 +318,7 @@
         if(snap.child("approved").exists() && snap.child("approved").val()) {
           var button = '<button class="disapproved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Disapprove</button>';
         }else {
-          var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Approve</button>';
+          var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Approve</button>';
         }
 
         var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
@@ -316,6 +335,24 @@
         return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), 
           snap.child("Address").val(), snap.child("Mobile").val(), button, disableBtn, ''];
       }
+    }
+
+    function sendEmail(email, name) {
+
+      var templateParams = {
+        to_name: name,
+        from_name: 'Ipaayos Admin',
+        message_html: 'Please Find out the attached file',
+        to_email: email
+      };
+
+      emailjs.send('service_b5b92as', 'template_p70b932', templateParams)
+        .then(function(response) {
+          console.log('SUCCESS!', response.status, response.text);
+        }, function(error) {
+          console.log('FAILED...', error);
+        });
+      
     }
   
 
