@@ -151,6 +151,23 @@
                 </tbody>
               </table>
 
+
+            </br>
+            <h3>Reports Table</h3>
+            <table id="reports_data" class="mdl-data-table" style="width:100%">
+              <thead>
+                  <tr>
+                      <th>Customer </th>
+                      <th>Provider </th>
+                      <th>Reason </th>
+                  </tr>
+              </thead>
+
+              <tbody>
+
+              </tbody>
+            </table>
+
             </center>
 
           </div>
@@ -258,7 +275,18 @@
       ]
     });
 
+    const report_table = $('#reports_data').DataTable({
+      dom: 'Bfrtip',
+      buttons: [
+        {
+          extend: 'pdfHtml5',
+          download: 'open'
+        }
+      ]
+    });
+
     var rootRef = firebase.database().ref().child("Users");
+    var reportRef = firebase.database().ref().child("Reports");
 
     $(document).on('click', '.approved', (e) => {
       if(confirm("Are you sure you want to action this user?")) {
@@ -354,6 +382,13 @@
         });
       
     }
+
+    reportRef.on("child_added", snap => {
+      const datasets = [snap.child("customer_id").val(), snap.child("provider_id").val(), snap.child("reason").val()];
+      const trDOM = report_table.row.add(datasets).draw().node();
+      $( trDOM ).addClass(snap.key);
+    
+    });
   
 
     rootRef.on("child_added", snap => {
