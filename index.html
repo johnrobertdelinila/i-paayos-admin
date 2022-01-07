@@ -289,12 +289,24 @@
     var reportRef = firebase.database().ref().child("Reports");
 
     $(document).on('click', '.approved', (e) => {
-      if(confirm("Are you sure you want to action this user?")) {
+      if(confirm("Are you sure you want approve action this user?")) {
         const key = $(e.currentTarget).attr('id');
         rootRef.child(key).update({'approved': true});
         const name = $(e.currentTarget).attr('name');
         const email = $(e.currentTarget).attr('email');
-        sendEmail(email, name);
+        const msg = 'Congratulations! Your registration as a Service Provider has been approved successfully.';
+        sendEmail(email, name, msg);
+      }
+    });
+
+    $(document).on('click', '.warning', (e) => {
+      if(confirm("Are you sure you want to warn this user?")) {
+        const key = $(e.currentTarget).attr('id');
+        const name = $(e.currentTarget).attr('name');
+        const email = $(e.currentTarget).attr('email');
+        var msg = 'iPaayos is focused on maintaining a safe and secure environment for our community. We found your account to be violated of our Terms of Service or Community Guidelines. ';
+        msg += 'Our team has reviewed the reports and taken action by sending you this email as a warning.\nIf you believe this decision was made in error, you may file an appeal by sending email to this account.';
+        sendEmail(email, name, msg);
       }
     });
 
@@ -349,6 +361,8 @@
           var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Approve</button>';
         }
 
+        var warning = '<button class="warning mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Warning</button>';
+
         var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
         listRef.listAll()
           .then((res) => {
@@ -361,16 +375,16 @@
           });
         
         return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), 
-          snap.child("Address").val(), snap.child("Mobile").val(), button, disableBtn, ''];
+          snap.child("Address").val(), snap.child("Mobile").val(), button, warning, disableBtn, ''];
       }
     }
 
-    function sendEmail(email, name) {
+    function sendEmail(email, name, message) {
 
       var templateParams = {
         to_name: name,
         from_name: 'Ipaayos Admin',
-        message_html: 'Please Find out the attached file',
+        message_html: message,
         to_email: email
       };
 
