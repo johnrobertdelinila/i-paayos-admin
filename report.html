@@ -103,9 +103,9 @@
         </header>
         <nav class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
           <a class="mdl-navigation__link" href="index.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Home</a>
-          <a class="mdl-navigation__link" href="customer.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Customer</a>
-          <a class="mdl-navigation__link" href="provider.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Service Provider</a>
-          <a class="mdl-navigation__link" href="report.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Report</a>
+          <a class="mdl-navigation__link" href="index.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Customer</a>
+          <a class="mdl-navigation__link" href="index.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Service Provider</a>
+          <a class="mdl-navigation__link" href="index.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>Report</a>
           <a class="mdl-navigation__link" href="announcement.html"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">mic</i>Announcement</a>
           <div class="mdl-layout-spacer"></div>
           <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">help_outline</i><span class="visuallyhidden">Help</span></a>
@@ -116,45 +116,6 @@
           <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
 
             <center>
-              <h3>Service Provider Table</h3>
-              <table id="provider_data" class="mdl-data-table" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Service</th>
-                        <th>Address</th>
-                        <th>Phone</th>
-                        <th>Verify</th>
-                        <th>Action</th>
-                        <th>Credentials</th>
-                    </tr>
-                </thead>
-  
-                <tbody>
-  
-                </tbody>
-              </table>
-              
-              </br>
-              <h3>Customer Table</h3>
-              <table id="customer_data" class="mdl-data-table" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Address</th>
-                        <th>Phone</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-  
-                <tbody>
-  
-                </tbody>
-              </table>
-
-
             </br>
             <h3>Reports Table</h3>
             <table id="reports_data" class="mdl-data-table" style="width:100%">
@@ -403,32 +364,29 @@
     reportRef.on("child_added", snap => {
       const datasets = [snap.child("customer_id").val(), snap.child("provider_id").val(), snap.child("reason").val()];
       const trDOM = report_table.row.add(datasets).draw().node();
-      $( trDOM ).addClass(snap.key);
+
+      const key = snap.key;
+      $( trDOM ).addClass(key);
+
+      firebase.database().ref().child("Users").child(snap.child("customer_id").val()).child("Name").once("value", function(snapshot) {
+        console.log(snapshot);
+        const name = snapshot.val();
+        const dataset = report_table.row('.' + key).data();
+        dataset[0] = name;
+        report_table.row('.' + key).data(dataset).draw();
+      });
+
+
+      firebase.database().ref().child("Users").child(snap.child("provider_id").val()).child("Name").once("value", function(snapshot) {
+        const name = snapshot.val();
+        const dataset = report_table.row('.' + key).data();
+        dataset[1] = name;
+        report_table.row('.' + key).data(dataset).draw();
+      });
+          
     
     });
   
-
-    rootRef.on("child_added", snap => {
-      const datasets = dataset(snap);
-      if(snap.child("Profession").val() == "") {
-        const trDOM = customer_table.row.add(datasets).draw().node();
-        $( trDOM ).addClass(snap.key);
-      }else {
-        const trDOM = provider_table.row.add(datasets).draw().node();
-        $( trDOM ).addClass(snap.key);
-      }
-    
-    });
-
-    rootRef.on('child_changed', snap => {
-      const datasets = dataset(snap);
-      if(snap.child("Profession").val() == "") {
-        customer_table.row('.' + snap.key).data(datasets).draw();
-      }else {
-        provider_table.row('.' + snap.key).data(datasets).draw();
-      }
-
-    });
     
 
   });
