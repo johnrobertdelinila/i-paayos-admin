@@ -46,6 +46,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script> 
     <script src="https://cdn.datatables.net/buttons/2.1.0/js/buttons.html5.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     
   
     <link rel="stylesheet" href="styles.css">
@@ -116,60 +118,14 @@
           <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
 
             <center>
-              <h3>Service Provider Table</h3>
-              <table id="provider_data" class="mdl-data-table" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Service</th>
-                        <th>Address</th>
-                        <th>Phone</th>
-                        <th>Verify</th>
-                        <th>Action</th>
-                        <th>Credentials</th>
-                    </tr>
-                </thead>
-  
-                <tbody>
-  
-                </tbody>
-              </table>
-              
-              </br>
-              <h3>Customer Table</h3>
-              <table id="customer_data" class="mdl-data-table" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Address</th>
-                        <th>Phone</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-  
-                <tbody>
-  
-                </tbody>
-              </table>
+              <canvas id="categoryChart" width="500" height="500"></canvas>
+              <br>
 
+              <canvas id="lowStockChart" width="500" height="500"></canvas>
+              <br>
 
-            </br>
-            <h3>Reports Table</h3>
-            <table id="reports_data" class="mdl-data-table" style="width:100%">
-              <thead>
-                  <tr>
-                      <th>Customer </th>
-                      <th>Provider </th>
-                      <th>Reason </th>
-                  </tr>
-              </thead>
-
-              <tbody>
-
-              </tbody>
-            </table>
+              <canvas id="chartJSContainer" width="500" height="500"></canvas>
+              <br>
 
             </center>
 
@@ -256,180 +212,176 @@
 <script>
   $(document).ready(() => {
 
-    emailjs.init("user_psoqqMkxfrpB6Bp9hcGho");
-    
-    const provider_table = $('#provider_data').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-        {
-          extend: 'pdfHtml5',
-          download: 'open'
+    const categoryPie = new Chart($('#categoryChart'), {
+			type: 'doughnut',
+			data: {
+				datasets: [{
+					data: [
+						0
+					]
+				}],
+				labels: [
+					'--'
+				]
+			},
+			options: {
+				responsive: true,
+				animation: {
+					animateRotate: true
+				},
+				title: {
+					text: 'Product category',
+					display: false
+				}
+			}
+		});
+
+    const lowStockBar = new Chart($('#lowStockChart'), {
+		  type: 'bar',
+		  data: {
+		    labels: [],
+		    datasets: [{
+		      label: 'Customers',
+		      data: [],
+		      backgroundColor: [],
+		      borderColor: [],
+		      borderWidth: 1
+		    }]
+		  },
+		  options: {
+		  	title: {
+		  		text: '',
+		  		display: false
+		  	},
+		    responsive: true,
+		    scales: {
+		      xAxes: [{
+		        ticks: {
+		          maxRotation: 90,
+		          minRotation: 80
+		        },
+		        scaleLabel: {
+	                display: true,
+	                labelString: 'Product'
+	              }
+		      }],
+		      yAxes: [{
+		        ticks: {
+		          beginAtZero: true
+		        },
+		        scaleLabel: {
+	                display: true,
+	                labelString: 'Stock'
+	              }
+		      }]
+		    }
+		  }
+		});
+
+    const salesChart = new Chart($('#chartJSContainer'), {
+			  type: 'line',
+			  data: {
+			    labels: [],
+			    datasets: [
+				    {
+			      		label: 'Service Provider',
+			      		pointHoverBorderColor: "yellow",
+			      		pointHoverBorderWidth: 2,
+			      		pointHoverBackgroundColor: "brown",
+			      		backgroundColor: randomBackgroundColor(1),
+			      		borderColor: randomBackgroundColor(1),
+			      		data: [],
+	      				borderWidth: 1
+			    	}
+				]
+			  },
+			  options: {
+			  	title: {
+			  		text: '',
+			  		display: true
+			  	},
+			  	scales: {
+				      xAxes: [{
+				        ticks: {
+				          maxRotation: 90,
+				          minRotation: 80
+				        },
+				        scaleLabel: {
+			                display: true,
+			                labelString: 'Interval'
+			              }
+				      }],
+				      yAxes: [{
+				        ticks: {
+				          beginAtZero: true
+				        },
+				        scaleLabel: {
+			                display: true,
+			                labelString: 'Sales'
+			              }
+				      }]
+				    }
+			  }
+		})
+
+
+    function randomBackgroundColor(length) {
+      var colors = [];
+      for (var i = 0; i < length; i++) {
+        const color = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+        colors.push(color);
+      }
+      return colors;
+    }
+
+    firebase.database().ref().child('Service Provider').once('value').then((snapshot) => {
+      var data = [];
+      var labels = [];
+      snapshot.forEach(datas => {
+        if(datas.key != 'Select') {
+          labels.push(datas.key);
+          data.push(datas.numChildren());
         }
-      ]
-    });
-
-    const customer_table = $('#customer_data').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-        {
-          extend: 'pdfHtml5',
-          download: 'open'
-        }
-      ]
-    });
-
-    const report_table = $('#reports_data').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-        {
-          extend: 'pdfHtml5',
-          download: 'open'
-        }
-      ]
-    });
-
-    var rootRef = firebase.database().ref().child("Users");
-    var reportRef = firebase.database().ref().child("Reports");
-
-    $(document).on('click', '.approved', (e) => {
-      if(confirm("Are you sure you want approve action this user?")) {
-        const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'approved': true});
-        const name = $(e.currentTarget).attr('name');
-        const email = $(e.currentTarget).attr('email');
-        const msg = 'Congratulations! Your registration as a Service Provider has been approved successfully.';
-        sendEmail(email, name, msg);
-      }
-    });
-
-    $(document).on('click', '.warning', (e) => {
-      if(confirm("Are you sure you want to warn this user?")) {
-        const key = $(e.currentTarget).attr('id');
-        const name = $(e.currentTarget).attr('name');
-        const email = $(e.currentTarget).attr('email');
-        var msg = 'iPaayos is focused on maintaining a safe and secure environment for our community. We found your account to be violated of our Terms of Service or Community Guidelines. ';
-        msg += 'Our team has reviewed the reports and taken action by sending you this email as a warning.\nIf you believe this decision was made in error, you may file an appeal by sending email to this account.';
-        sendEmail(email, name, msg);
-      }
-    });
-
-    $(document).on('click', '.disapproved', (e) => {
-      if(confirm("Are you sure you want to action this user?")) {
-        const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'approved': false});
-      }
-    });
-
-    $(document).on('click', '.disable', (e) => {
-      if(confirm("Are you sure you want to action this user?")) {
-        const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'isDisabled': true})
-      }
-    });
-
-    $(document).on('click', '.disabled', (e) => {
-      if(confirm("Are you sure you want to action this user?")) {
-        const key = $(e.currentTarget).attr('id');
-        rootRef.child(key).update({'isDisabled': false})
-      }
-    });
-
-    function displayImage(imageRef, key) {
-      imageRef.getDownloadURL().then(function(url) {
-        const dataset = provider_table.row('.' + key).data();
-        dataset[7] += '<a target="_blank" href="'+ url +'"><img src="'+ url +'" style="margin-left: 2px; margin-right: 2px;" width="50" height="50" alt="credential"></a>';
-        provider_table.row('.' + key).data(dataset).draw();
-      }).catch(function(error) {
-        console.log(error.message);
       });
-    }
+      categoryPie.data.labels = labels;
+      categoryPie.data.datasets[0].data = data;
+      categoryPie.data.datasets[0].backgroundColor = randomBackgroundColor(labels.length);
+      categoryPie.options.title.text = "Service Provider Overview";
+      categoryPie.update();
+    });
 
-    function dataset(snap) {
-      if(snap.child("Profession").val() == "") {
-        if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
-          var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
+    firebase.database().ref().child('Users').once('value').then((snapshot) => {
+      var data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      var data2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      var labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      snapshot.forEach(datas => {
+        if(datas.child('Type').val() == 'Customer') {
+          data[0]++;
         }else {
-          var disableBtn = '<button class="disable mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Disable</button>';
+          data2[0]++;
         }
-        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val(), disableBtn];
-      }else {
-        if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
-          var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
-        }else {
-          var disableBtn = '<button class="disable mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Disable</button>';
-        }
-        if(snap.child("approved").exists() && snap.child("approved").val()) {
-          var button = '<button class="disapproved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Disapprove</button>';
-        }else {
-          var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Approve</button>';
-        }
+      });
 
-        var warning = '<button class="warning mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Warning</button>';
+      lowStockBar.data.labels = labels;
+      lowStockBar.data.datasets[0].data = data;
+      lowStockBar.data.datasets[0].backgroundColor = randomBackgroundColor(labels.length);
+      lowStockBar.data.datasets[0].borderColor = randomBackgroundColor(labels.length);
+      lowStockBar.data.datasets[0].label = 'Customers'
+      lowStockBar.options.title.text = 'Service Provider';
+      lowStockBar.update();
 
-        var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
-        listRef.listAll()
-          .then((res) => {
-            console.log("Meron");
-            res.items.forEach((imageRef) => {
-              displayImage(imageRef, snap.key);
-            });
-          }).catch((error) => {
-            console.log(error.message);
-          });
-        
-        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), 
-          snap.child("Address").val(), snap.child("Mobile").val(), button, warning, disableBtn, ''];
-      }
-    }
-
-    function sendEmail(email, name, message) {
-
-      var templateParams = {
-        to_name: name,
-        from_name: 'Ipaayos Admin',
-        message_html: message,
-        to_email: email
-      };
-
-      emailjs.send('service_b5b92as', 'template_p70b932', templateParams)
-        .then(function(response) {
-          console.log('SUCCESS!', response.status, response.text);
-        }, function(error) {
-          console.log('FAILED...', error);
-        });
+      salesChart.data.labels = labels;
+      salesChart.data.datasets[0].data = data;
+      salesChart.data.datasets[0].backgroundColor = randomBackgroundColor(labels.length);
+      salesChart.data.datasets[0].borderColor = randomBackgroundColor(labels.length);
+      salesChart.data.datasets[0].label = 'Service Provider';
+      salesChart.options.title.text = 'Service Provider';
+      salesChart.update();
       
-    }
-
-    reportRef.on("child_added", snap => {
-      const datasets = [snap.child("customer_id").val(), snap.child("provider_id").val(), snap.child("reason").val()];
-      const trDOM = report_table.row.add(datasets).draw().node();
-      $( trDOM ).addClass(snap.key);
-    
-    });
-  
-
-    rootRef.on("child_added", snap => {
-      const datasets = dataset(snap);
-      if(snap.child("Profession").val() == "") {
-        const trDOM = customer_table.row.add(datasets).draw().node();
-        $( trDOM ).addClass(snap.key);
-      }else {
-        const trDOM = provider_table.row.add(datasets).draw().node();
-        $( trDOM ).addClass(snap.key);
-      }
-    
     });
 
-    rootRef.on('child_changed', snap => {
-      const datasets = dataset(snap);
-      if(snap.child("Profession").val() == "") {
-        customer_table.row('.' + snap.key).data(datasets).draw();
-      }else {
-        provider_table.row('.' + snap.key).data(datasets).draw();
-      }
+        
 
-    });
-    
 
   });
 </script>
