@@ -76,23 +76,6 @@
         <div class="mdl-layout__header-row">
           <span class="mdl-layout-title">Service Provider</span>
           <div class="mdl-layout-spacer"></div>
-        <!--  <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-            <label class="mdl-button mdl-js-button mdl-button--icon" for="search">
-              <i class="material-icons">search</i>
-            </label>
-            <div class="mdl-textfield__expandable-holder">
-              <input class="mdl-textfield__input" type="text" id="search">
-              <label class="mdl-textfield__label" for="search">Enter your query...</label>
-            </div>
-          </div>
-          <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="hdrbtn">
-            <i class="material-icons">more_vert</i>
-          </button>
-          <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-right" for="hdrbtn">
-            <li class="mdl-menu__item">About</li>
-            <li class="mdl-menu__item">Contact</li>
-            <li class="mdl-menu__item">Legal information</li>
-          </ul> -->
         </div>
       </header>
       <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50">
@@ -271,6 +254,22 @@
       if(confirm("Are you sure you want approve action this user?")) {
         const key = $(e.currentTarget).attr('id');
         rootRef.child(key).update({'approved': true});
+
+        spRef.get().then((snapshot) => {
+          if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+              child.forEach((grandchild) => {
+                if(grandchild.key == key) {
+                  console.log("Eto siya: " + grandchild.ref);
+                  grandchild.ref.update({'approved': true});
+                }
+              });
+            });
+          } else {
+            console.log("No data available");
+          }
+        });
+        
         const name = $(e.currentTarget).attr('name');
         const email = $(e.currentTarget).attr('email');
         const msg = 'Congratulations! Your registration as a Service Provider has been approved successfully.';
@@ -293,6 +292,21 @@
       if(confirm("Are you sure you want to action this user?")) {
         const key = $(e.currentTarget).attr('id');
         rootRef.child(key).update({'approved': false});
+
+        spRef.get().then((snapshot) => {
+          if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+              child.forEach((grandchild) => {
+                if(grandchild.key == key) {
+                  grandchild.ref.update({'approved': false});
+                }
+              });
+            });
+          } else {
+            console.log("No data available");
+          }
+        });
+
       }
     });
 
@@ -345,7 +359,6 @@
         var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
         listRef.listAll()
           .then((res) => {
-            console.log("Meron");
             res.items.forEach((imageRef) => {
               displayImage(imageRef, snap.key);
             });

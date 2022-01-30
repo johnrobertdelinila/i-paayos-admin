@@ -59,6 +59,16 @@
       margin-bottom: 40px;
       z-index: 900;
     }
+
+    .demo-charts {
+        margin: 4px, 4px;
+        padding: 4px;
+        background-color: #08c708;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+    }
+
     </style>
   </head>
   <body>
@@ -128,6 +138,7 @@
                         <th>Address</th>
                         <th>Phone</th>
                         <th>Action</th>
+                        <th>Credentials</th>
                     </tr>
                 </thead>
   
@@ -263,7 +274,7 @@
         rootRef.child(key).update({'approved': true});
         const name = $(e.currentTarget).attr('name');
         const email = $(e.currentTarget).attr('email');
-        const msg = 'Congratulations! Your registration as a Service Provider has been approved successfully.';
+        const msg = 'Congratulations! Your registration has been approved successfully.';
         sendEmail(email, name, msg);
       }
     });
@@ -302,22 +313,41 @@
 
     function displayImage(imageRef, key) {
       imageRef.getDownloadURL().then(function(url) {
-        const dataset = provider_table.row('.' + key).data();
-        dataset[7] += '<a target="_blank" href="'+ url +'"><img src="'+ url +'" style="margin-left: 2px; margin-right: 2px;" width="50" height="50" alt="credential"></a>';
-        provider_table.row('.' + key).data(dataset).draw();
+        const dataset = customer_table.row('.' + key).data();
+        dataset[5] += '<a target="_blank" href="'+ url +'"><img src="'+ url +'" style="margin-left: 2px; margin-right: 2px;" width="50" height="50" alt="credential"></a>';
+        customer_table.row('.' + key).data(dataset).draw();
       }).catch(function(error) {
         console.log(error.message);
       });
     }
 
     function dataset(snap) {
+
       if(snap.child("Profession").val() == "") {
         if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
           var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
         }else {
           var disableBtn = '<button class="disable mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Disable</button>';
         }
-        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val(), disableBtn];
+
+        if(snap.child("approved").exists() && snap.child("approved").val()) {
+          var button = '<button class="disapproved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Disapprove</button>';
+        }else {
+          var button = '<button class="approved mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" email="'+ snap.child("Email").val() +'" name="'+ snap.child("Name").val() +'" id="'+ snap.key +'">Approve</button>';
+        }
+
+        var listRef = firebase.storage().ref().child('Credentials/' + snap.key);
+        listRef.listAll()
+          .then((res) => {
+            console.log("Meron");
+            res.items.forEach((imageRef) => {
+              displayImage(imageRef, snap.key);
+            });
+          }).catch((error) => {
+            console.log(error.message);
+          });
+
+        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Address").val(), snap.child("Mobile").val(), button + disableBtn, ''];
       }else {
         if(snap.child("isDisabled").exists() && snap.child("isDisabled").val()) {
           var disableBtn = '<button class="disabled mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Enable</button>';
