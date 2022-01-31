@@ -249,6 +249,7 @@
 
     var rootRef = firebase.database().ref().child("Users");
     var reportRef = firebase.database().ref().child("Reports");
+    var spRef = firebase.database().ref().child("Service Provider");
 
     $(document).on('click', '.approved', (e) => {
       if(confirm("Are you sure you want approve action this user?")) {
