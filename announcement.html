@@ -36,9 +36,23 @@
 
     <link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.material.min.css">
     <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/4.0.0/material-components-web.min.css">
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/dataTables.bootstrap5.min.css" />
     
     <script type="text/JavaScript" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
     <script type="text/JavaScript" src="https://cdn.datatables.net/1.10.25/js/dataTables.material.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
   
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -221,7 +235,25 @@
     const announcement_table = $('#provider_data').DataTable({
       dom: 'Bfrtip',
       buttons: [
-          'csv'
+        {
+            extend: 'print',
+            title: function(){
+                var printTitle = 'iPaayos Reports';
+                return printTitle
+            },
+            customize: function (win) {
+              $(win.document.body)
+                  .css('font-size', '10pt')
+                  .prepend(
+                      '<center><img src="https://raw.githubusercontent.com/johnrobertdelinila/ipaayos-flutter/master/assets/images/logo.png" height="100" width="230" style="margin-bottom: 30px;" /></center>'
+                  );
+
+              $(win.document.body).find('table')
+                  .addClass('compact')
+                  .css('font-size', 'inherit');
+            },
+        },
+        'copy', 'csv', 'excel', 'pdf'
       ]
     });
 
