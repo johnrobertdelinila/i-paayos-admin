@@ -139,6 +139,7 @@
                     <tr>
                         <th>Announcement</th>
                         <th>Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
   
@@ -272,10 +273,43 @@
     var rootRef = firebase.database().ref().child("Announcement");
 
     rootRef.on("child_added", snap => {
-      var announcementDataSet = [snap.child("announcement").val(), snap.child("timestamp").val()];
-      announcement_table.rows.add([announcementDataSet]).draw();
-    
-    })
+
+      if(snap.child("isArchive").exists() && snap.child("isArchive").val()) {
+        var disableBtn = '<button class="unarchive mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Unarchive</button>';
+      }else {
+        var disableBtn = '<button class="archive mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Archive</button>';
+      }
+
+      var announcementDataSet = [snap.child("announcement").val(), snap.child("timestamp").val(), disableBtn];
+      const trDOM = announcement_table.row.add(announcementDataSet).draw().node();
+      $( trDOM ).addClass(snap.key);
+    });
+
+    rootRef.on('child_changed', snap => {
+      if(snap.child("isArchive").exists() && snap.child("isArchive").val()) {
+        var disableBtn = '<button class="unarchive mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="'+ snap.key +'">Unarchive</button>';
+      }else {
+        var disableBtn = '<button class="archive mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" id="'+ snap.key +'">Archive</button>';
+      }
+
+      var announcementDataSet = [snap.child("announcement").val(), snap.child("timestamp").val(), disableBtn];
+      announcement_table.row('.' + snap.key).data(announcementDataSet).draw();
+
+    });
+
+    $(document).on('click', '.archive', (e) => {
+      if(confirm("Are you sure you want to archive this announcement?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'isArchive': true});
+      }
+    });
+
+    $(document).on('click', '.unarchive', (e) => {
+      if(confirm("Are you sure you want to unarchive this announcement?")) {
+        const key = $(e.currentTarget).attr('id');
+        rootRef.child(key).update({'isArchive': false});
+      }
+    });
     
 
   });

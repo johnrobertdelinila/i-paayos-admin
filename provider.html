@@ -117,14 +117,27 @@
         <div class="mdl-grid demo-content">
           <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
 
-            <center>
+            
               <h3>Service Provider Table</h3>
+
+              <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="margin-left: 90px;">
+                <select class="mdl-textfield__input" id="octane" name="octane">
+                  <option value="All">All</option>
+                  <option value="Enabled">Enabled</option>
+                  <option value="Disabled">Disabled</option>
+                </select>
+                <label class="mdl-textfield__label" for="octane">Filter</label>
+              </div>
+              
+              <center>
               <table id="provider_data" class="mdl-data-table" style="width:100%;">
                 <thead>
                     <tr>
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Service</th>
+                        <th>Reports</th>
+                        <th>Specialization</th>
+                        <th>Service(s)</th>
                         <th>Address</th>
                         <th>Phone</th>
                         <th>Verify</th>
@@ -276,6 +289,9 @@
     var reportRef = firebase.database().ref().child("Reports");
     var spRef = firebase.database().ref().child("Service Provider");
 
+    
+    const services = ["Aircon Technician", "CCTV Technician", "Car Mechanic", "Computer Technician", "Machine Mechanic", "Motor Mechanic"];
+
     $(document).on('click', '.approved', (e) => {
       if(confirm("Are you sure you want approve action this user?")) {
         const key = $(e.currentTarget).attr('id');
@@ -395,8 +411,8 @@
             console.log(error.message);
           });
         
-        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("Profession").val(), 
-          snap.child("Address").val(), snap.child("Mobile").val(), button, warning, disableBtn, ''];
+        return [snap.child("Name").val(), snap.child("Email").val(), snap.child("reports").exists() ? snap.child("reports").val() : 0, snap.child("Profession").val() == "Select" ? "" : snap.child("Profession").val(),
+         services.toString(), snap.child("Address").val(), snap.child("Mobile").val(), button, warning, disableBtn, ''];
       }
     }
 
@@ -417,16 +433,11 @@
         });
       
     }
-
-    reportRef.on("child_added", snap => {
-      const datasets = [snap.child("customer_id").val(), snap.child("provider_id").val(), snap.child("reason").val()];
-      const trDOM = report_table.row.add(datasets).draw().node();
-      $( trDOM ).addClass(snap.key);
     
-    });
-  
+    var listnerAdd = rootRef;
+    var listnerUpdate = rootRef;
 
-    rootRef.on("child_added", snap => {
+    listnerAdd.on("child_added", snap => {
       const datasets = dataset(snap);
       if(snap.child("Profession").val() == "") {
         const trDOM = customer_table.row.add(datasets).draw().node();
@@ -435,18 +446,58 @@
         const trDOM = provider_table.row.add(datasets).draw().node();
         $( trDOM ).addClass(snap.key);
       }
-    
     });
 
-    rootRef.on('child_changed', snap => {
+    listnerUpdate.on('child_changed', snap => {
       const datasets = dataset(snap);
       if(snap.child("Profession").val() == "") {
         customer_table.row('.' + snap.key).data(datasets).draw();
       }else {
         provider_table.row('.' + snap.key).data(datasets).draw();
       }
+    });
+
+    $('#octane').change(() => {
+      listnerAdd.off();
+      provider_table.clear().draw();
+      const val = $('#octane').val();
+
+      listnerAdd = rootRef;
+
+      listnerAdd.on("child_added", snap => {
+        const datasets = dataset(snap);
+        
+        if(val == "All") {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }else if(val == "Disabled" && snap.child("isDisabled").exists() && snap.child("isDisabled").val() == true) {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }else if(val == "Enabled" && ((snap.child("isDisabled").exists() && snap.child("isDisabled").val() == false) || !snap.child("isDisabled").exists())) {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }
+
+        
+      });
 
     });
+
     
 
   });

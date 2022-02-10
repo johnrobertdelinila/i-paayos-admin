@@ -130,11 +130,22 @@
         <div class="mdl-grid demo-content">
           <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid">
 
-            <center>
+            
             
               
               </br>
               <h3>Customer Table</h3>
+
+              <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="margin-left: 90px;">
+                <select class="mdl-textfield__input" id="octane" name="octane">
+                  <option value="All">All</option>
+                  <option value="Enabled">Enabled</option>
+                  <option value="Disabled">Disabled</option>
+                </select>
+                <label class="mdl-textfield__label" for="octane">Filter</label>
+              </div>
+
+              <center>
               <table id="customer_data" class="mdl-data-table" style="width:130%">
                 <thead>
                     <tr>
@@ -419,15 +430,10 @@
       
     }
 
-    reportRef.on("child_added", snap => {
-      const datasets = [snap.child("customer_id").val(), snap.child("provider_id").val(), snap.child("reason").val()];
-      const trDOM = report_table.row.add(datasets).draw().node();
-      $( trDOM ).addClass(snap.key);
-    
-    });
-  
+    var listnerAdd = rootRef;
+    var listnerUpdate = rootRef;
 
-    rootRef.on("child_added", snap => {
+    listnerAdd.on("child_added", snap => {
       const datasets = dataset(snap);
       if(snap.child("Profession").val() == "") {
         const trDOM = customer_table.row.add(datasets).draw().node();
@@ -436,16 +442,55 @@
         const trDOM = provider_table.row.add(datasets).draw().node();
         $( trDOM ).addClass(snap.key);
       }
-    
     });
 
-    rootRef.on('child_changed', snap => {
+    listnerUpdate.on('child_changed', snap => {
       const datasets = dataset(snap);
       if(snap.child("Profession").val() == "") {
         customer_table.row('.' + snap.key).data(datasets).draw();
       }else {
         provider_table.row('.' + snap.key).data(datasets).draw();
       }
+    });
+
+    $('#octane').change(() => {
+      listnerAdd.off();
+      customer_table.clear().draw();
+      const val = $('#octane').val();
+
+      listnerAdd = rootRef;
+
+      listnerAdd.on("child_added", snap => {
+        const datasets = dataset(snap);
+        
+        if(val == "All") {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }else if(val == "Disabled" && snap.child("isDisabled").exists() && snap.child("isDisabled").val() == true) {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }else if(val == "Enabled" && ((snap.child("isDisabled").exists() && snap.child("isDisabled").val() == false) || !snap.child("isDisabled").exists())) {
+          if(snap.child("Profession").val() == "") {
+            const trDOM = customer_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }else {
+            const trDOM = provider_table.row.add(datasets).draw().node();
+            $( trDOM ).addClass(snap.key);
+          }
+        }
+
+        
+      });
 
     });
     
